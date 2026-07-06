@@ -1,0 +1,228 @@
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
+
+-- Создаем ScreenGui
+local SONYA_UI = Instance.new("ScreenGui")
+SONYA_UI.Name = "SONYA_UI"
+SONYA_UI.ResetOnSpawn = false
+SONYA_UI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- Защита от обнаружения (если используется инжектор)
+local success, err = pcall(function()
+    SONYA_UI.Parent = CoreGui
+end)
+if not success then
+    SONYA_UI.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+end
+
+-- ==========================================
+-- 1. ЭКРАН ЗАГРУЗКИ
+-- ==========================================
+local LoadingFrame = Instance.new("Frame")
+LoadingFrame.Size = UDim2.new(1, 0, 1, 0)
+LoadingFrame.BackgroundColor3 = Color3.fromRGB(5, 5, 5)
+LoadingFrame.Parent = SONYA_UI
+LoadingFrame.ZIndex = 10
+
+local LoadingText = Instance.new("TextLabel")
+LoadingText.Size = UDim2.new(0, 400, 0, 50)
+LoadingText.Position = UDim2.new(0.5, -200, 0.5, -25)
+LoadingText.BackgroundTransparency = 1
+LoadingText.Font = Enum.Font.Rajdhani
+LoadingText.Text = "ПОДКЛЮЧЕНИЕ К СЕРВЕРУ..."
+LoadingText.TextColor3 = Color3.fromRGB(168, 155, 242)
+LoadingText.TextSize = 24
+LoadingText.Parent = LoadingFrame
+
+-- ==========================================
+-- 2. ГЛАВНОЕ МЕНЮ
+-- ==========================================
+local MainMenu = Instance.new("Frame")
+MainMenu.Size = UDim2.new(0, 750, 0, 450)
+MainMenu.Position = UDim2.new(0.5, -375, 0.5, -225)
+MainMenu.BackgroundColor3 = Color3.fromRGB(30, 20, 50)
+MainMenu.BackgroundTransparency = 0.15 -- Эффект стекла
+MainMenu.BorderSizePixel = 0
+MainMenu.ClipsDescendants = true
+MainMenu.Visible = false
+MainMenu.Parent = SONYA_UI
+
+local MenuCorner = Instance.new("UICorner")
+MenuCorner.CornerRadius = UDim.new(0, 12)
+MenuCorner.Parent = MainMenu
+
+local MenuStroke = Instance.new("UIStroke")
+MenuStroke.Color = Color3.fromRGB(168, 155, 242)
+MenuStroke.Thickness = 1.5
+MenuStroke.Transparency = 0.5
+MenuStroke.Parent = MainMenu
+
+-- ==========================================
+-- 3. ВЕРХНЯЯ ПАНЕЛЬ (Header + Drag)
+-- ==========================================
+local Header = Instance.new("Frame")
+Header.Size = UDim2.new(1, 0, 0, 40)
+Header.BackgroundColor3 = Color3.fromRGB(10, 5, 20)
+Header.BackgroundTransparency = 0.5
+Header.BorderSizePixel = 0
+Header.Parent = MainMenu
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(0, 150, 1, 0)
+Title.Position = UDim2.new(0, 15, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Font = Enum.Font.Rajdhani
+Title.Text = "SONYA<3"
+Title.TextColor3 = Color3.fromRGB(0, 243, 255)
+Title.TextSize = 22
+Title.FontWeight = Enum.FontWeight.Bold
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = Header
+
+local UserInfo = Instance.new("TextLabel")
+UserInfo.Size = UDim2.new(0, 150, 1, 0)
+UserInfo.Position = UDim2.new(1, -165, 0, 0)
+UserInfo.BackgroundTransparency = 1
+UserInfo.Font = Enum.Font.Rajdhani
+UserInfo.Text = "un<red | INJECTED"
+UserInfo.TextColor3 = Color3.fromRGB(0, 255, 102)
+UserInfo.TextSize = 16
+UserInfo.TextXAlignment = Enum.TextXAlignment.Right
+UserInfo.Parent = Header
+
+-- Логика перетаскивания окна (Drag)
+local dragging, dragInput, dragStart, startPos
+Header.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainMenu.Position
+    end
+end)
+Header.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement and dragging then
+        local delta = input.Position - dragStart
+        MainMenu.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+-- ==========================================
+-- 4. БОКОВОЕ МЕНЮ (Sidebar)
+-- ==========================================
+local Sidebar = Instance.new("Frame")
+Sidebar.Size = UDim2.new(0, 160, 1, -80)
+Sidebar.Position = UDim2.new(0, 0, 0, 40)
+Sidebar.BackgroundColor3 = Color3.fromRGB(15, 10, 25)
+Sidebar.BackgroundTransparency = 0.5
+Sidebar.BorderSizePixel = 0
+Sidebar.Parent = MainMenu
+
+local Tabs = {"AIMBOT", "WALLHACK", "ESP", "MISC", "SETTINGS"}
+for i, tabName in ipairs(Tabs) do
+    local TabBtn = Instance.new("TextButton")
+    TabBtn.Size = UDim2.new(1, 0, 0, 40)
+    TabBtn.Position = UDim2.new(0, 0, 0, (i-1)*45 + 10)
+    TabBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    TabBtn.BackgroundTransparency = 1
+    TabBtn.Font = Enum.Font.Rajdhani
+    TabBtn.Text = "  " .. tabName
+    TabBtn.TextColor3 = Color3.fromRGB(139, 146, 165)
+    TabBtn.TextSize = 18
+    TabBtn.TextXAlignment = Enum.TextXAlignment.Left
+    TabBtn.Parent = Sidebar
+
+    -- Эффект при наведении
+    TabBtn.MouseEnter:Connect(function()
+        TweenService:Create(TabBtn, TweenInfo.new(0.3), {TextColor3 = Color3.fromRGB(255, 0, 127)}):Play()
+    end)
+    TabBtn.MouseLeave:Connect(function()
+        TweenService:Create(TabBtn, TweenInfo.new(0.3), {TextColor3 = Color3.fromRGB(139, 146, 165)}):Play()
+    end)
+end
+
+-- ==========================================
+-- 5. ЦЕНТРАЛЬНАЯ ЧАСТЬ (Контент)
+-- ==========================================
+local ContentFrame = Instance.new("Frame")
+ContentFrame.Size = UDim2.new(1, -160, 1, -80)
+ContentFrame.Position = UDim2.new(0, 160, 0, 40)
+ContentFrame.BackgroundTransparency = 1
+ContentFrame.Parent = MainMenu
+
+local WelcomeText = Instance.new("TextLabel")
+WelcomeText.Size = UDim2.new(1, 0, 1, 0)
+WelcomeText.BackgroundTransparency = 1
+WelcomeText.Font = Enum.Font.Rajdhani
+WelcomeText.Text = "МЕНЮ ЗАГРУЖЕНО\nВЫБЕРИТЕ ФУНКЦИЮ"
+WelcomeText.TextColor3 = Color3.fromRGB(255, 0, 127)
+WelcomeText.TextSize = 24
+WelcomeText.Parent = ContentFrame
+
+-- ==========================================
+-- 6. НИЖНЯЯ ПАНЕЛЬ (Footer: Ping & FPS)
+-- ==========================================
+local Footer = Instance.new("Frame")
+Footer.Size = UDim2.new(1, 0, 0, 40)
+Footer.Position = UDim2.new(0, 0, 1, -40)
+Footer.BackgroundColor3 = Color3.fromRGB(10, 5, 20)
+Footer.BackgroundTransparency = 0.5
+Footer.BorderSizePixel = 0
+Footer.Parent = MainMenu
+
+local StatsText = Instance.new("TextLabel")
+StatsText.Size = UDim2.new(0, 300, 1, 0)
+StatsText.Position = UDim2.new(0, 15, 0, 0)
+StatsText.BackgroundTransparency = 1
+StatsText.Font = Enum.Font.Rajdhani
+StatsText.Text = "PING: 0ms   |   FPS: 0"
+StatsText.TextColor3 = Color3.fromRGB(139, 146, 165)
+StatsText.TextSize = 16
+StatsText.TextXAlignment = Enum.TextXAlignment.Left
+StatsText.Parent = Footer
+
+-- Логика FPS и Ping
+local frames = 0
+RunService.RenderStepped:Connect(function()
+    frames = frames + 1
+end)
+
+task.spawn(function()
+    while task.wait(1) do
+        local ping = math.random(20, 85) -- Имитация или можно получить реальный пинг через Stats
+        StatsText.Text = string.format("PING: %dms   |   FPS: %d", ping, frames)
+        frames = 0
+    end
+end)
+
+-- ==========================================
+-- 7. АНИМАЦИЯ ПОЯВЛЕНИЯ
+-- ==========================================
+task.delay(1.5, function()
+    LoadingText.Text = "ИНЪЕКЦИЯ ВЫПОЛНЕНА"
+    LoadingText.TextColor3 = Color3.fromRGB(0, 255, 102)
+    
+    task.delay(1, function()
+        local fadeOut = TweenService:Create(LoadingFrame, TweenInfo.new(0.8), {BackgroundTransparency = 1})
+        local textFade = TweenService:Create(LoadingText, TweenInfo.new(0.8), {TextTransparency = 1})
+        fadeOut:Play()
+        textFade:Play()
+        
+        fadeOut.Completed:Connect(function()
+            LoadingFrame:Destroy()
+            MainMenu.Visible = true
+            
+            -- Анимация масштабирования меню при открытии
+            MainMenu.Size = UDim2.new(0, 700, 0, 400)
+            TweenService:Create(MainMenu, TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+                Size = UDim2.new(0, 750, 0, 450)
+            }):Play()
+        end)
+    end)
+end)
